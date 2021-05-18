@@ -17,7 +17,7 @@ include:
   stage: build
   image: $CI_REGISTRY_IMAGE/qemu/$IMAGE:latest
   before_script:
-    - JOBS=$(expr $(nproc) + 1)
+    - JOBS=$(nproc || echo 1)
   script:
     - if test -n "$LD_JOBS";
       then
