@@ -50,7 +50,7 @@ include:
     - cd build
     - find . -type f -exec touch {} +
     # Avoid recompiling by hiding ninja with NINJA=":"
-    - make NINJA=":" $MAKE_CHECK_ARGS
+    - make -j"$JOBS" NINJA=":" $MAKE_CHECK_ARGS
 
 .acceptance_template: &acceptance_definition
   cache:
@@ -387,8 +387,8 @@ build-tcg-disabled:
     - ../configure --disable-tcg --audio-drv-list="" --with-coroutine=ucontext
       || { cat config.log meson-logs/meson-log.txt && exit 1; }
     - make -j"$JOBS"
-    - make check-unit
-    - make check-qapi-schema
+    - make check-unit -j"$JOBS"
+    - make check-qapi-schema -j"$JOBS"
     - cd tests/qemu-iotests/
     - ./check -raw 001 002 003 004 005 008 009 010 011 012 021 025 032 033 048
             052 063 077 086 101 104 106 113 148 150 151 152 157 159 160 163
@@ -685,7 +685,7 @@ build-oss-fuzz:
         "${fuzzer}" -runs=1 -seed=1 || exit 1 ;
       done
     # Unrelated to fuzzer: run some tests with -fsanitize=address
-    - cd build-oss-fuzz && make check-qtest-i386 check-unit
+    - cd build-oss-fuzz && make check-qtest-i386 check-unit -j"$JOBS" MTESTARGS="-t 2"
 
 build-tci:
   extends: .native_build_job_template

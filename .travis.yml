@@ -73,7 +73,7 @@ env:
     - BUILD_DIR="build"
     - BASE_CONFIG="--disable-docs --disable-tools"
     - TEST_BUILD_CMD=""
-    - TEST_CMD="make check V=1"
+    - TEST_CMD="make check -j${JOBS} V=1"
     # This is broadly a list of "mainline" softmmu targets which have support across the major distros
     - MAIN_SOFTMMU_TARGETS="aarch64-softmmu,mips64-softmmu,ppc64-softmmu,riscv64-softmmu,s390x-softmmu,x86_64-softmmu"
     - CCACHE_SLOPPINESS="include_file_ctime,include_file_mtime"
@@ -151,7 +151,7 @@ jobs:
           # Tests dependencies
           - genisoimage
       env:
-        - TEST_CMD="make check check-tcg V=1"
+        - TEST_CMD="make check check-tcg -j${JOBS} V=1"
         - CONFIG="--disable-containers --target-list=${MAIN_SOFTMMU_TARGETS} --cxx=/bin/false"
         - UNRELIABLE=true
 
@@ -185,7 +185,7 @@ jobs:
           # Tests dependencies
           - genisoimage
       env:
-        - TEST_CMD="make check check-tcg V=1"
+        - TEST_CMD="make check check-tcg -j${JOBS} V=1"
         - CONFIG="--disable-containers --target-list=ppc64-softmmu,ppc64le-linux-user"
 
     - name: "[s390x] GCC check-tcg"
@@ -218,7 +218,7 @@ jobs:
           # Tests dependencies
           - genisoimage
       env:
-        - TEST_CMD="make check check-tcg V=1"
+        - TEST_CMD="make check check-tcg -j${JOBS} V=1"
         - CONFIG="--disable-containers --target-list=${MAIN_SOFTMMU_TARGETS},s390x-linux-user"
         - UNRELIABLE=true
       script:
@@ -301,7 +301,7 @@ jobs:
           - libvte-2.91-dev
           - ninja-build
       env:
-        - TEST_CMD="make check-unit"
+        - TEST_CMD="make check-unit -j${JOBS}"
         - CONFIG="--disable-containers --disable-tcg --enable-kvm
                   --disable-tools --host-cc=clang --cxx=clang++"
         - UNRELIABLE=true
