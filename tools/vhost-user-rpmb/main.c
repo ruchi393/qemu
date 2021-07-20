@@ -68,7 +68,7 @@ enum {
 
 /* These structures are defined in the specification */
 #define KiB     (1UL << 10)
-#define MAX_RPMB_SIZE (KiB * 128 * 256)
+#define MAX_RPMB_SIZE (KiB * 128 * 128)
 #define RPMB_KEY_MAC_SIZE 32
 #define RPMB_BLOCK_SIZE 256
 
@@ -723,16 +723,20 @@ static bool vrpmb_load_flash_image(VuRpmb *r, char *img_path)
         return false;
     }
 
+    g_print("statbuf size is %lx, max rpmb size is %lx \n", statbuf.st_size, MAX_RPMB_SIZE);
     if (statbuf.st_size > MAX_RPMB_SIZE) {
         g_warning("%s larger than maximum size supported", img_path);
         map_size = MAX_RPMB_SIZE;
     } else {
         map_size = statbuf.st_size;
+    	g_print("<<<<<size is %lx\n", map_size);
     }
+    g_print("size is %lx\n", map_size);
     r->virtio_config.capacity = map_size / (128 *KiB);
     r->virtio_config.max_wr_cnt = 1;
     r->virtio_config.max_rd_cnt = 1;
 
+    g_print("capacity is %lx\n", r->virtio_config.capacity);
     r->flash_map = mmap(NULL, map_size, PROT_READ, MAP_SHARED, r->flash_fd, 0);
     if (r->flash_map == MAP_FAILED) {
         g_error("failed to mmap file");
