@@ -30,6 +30,8 @@
 
 #include "hmac_sha256.h"
 
+#define PAGE_SIZE	0x00001000
+
 #ifndef container_of
 #define container_of(ptr, type, member) ({                      \
         const typeof(((type *) 0)->member) *__mptr = (ptr);     \
@@ -401,18 +403,33 @@ static int vrpmb_handle_write(VuDev *dev, struct virtio_rpmb_frame *frame)
         r->write_count++;
         for (i = 0; i < block_count; i++) {
             void *blk = r->flash_map + offset;
+	    void *addr = r->flash_map + offset;
+	    size_t align_mask = ~(PAGE_SIZE - 1);
+	    size_t length = RPMB_BLOCK_SIZE;
+
+	    /**
+	     * There are no strict reqs as per the length of mapping
+	     * to be synced. Still the length needs to follow the address
+	     * alignment changes. Additionally - round the size to the multiple
+	     * of PAGE_SIZE
+	     */
+	    length += ((uintptr_t)addr & (PAGE_SIZE - 1));
+	    length = (length + ~align_mask) & align_mask;
+
+	    addr = (void *)((uintptr_t)addr & align_mask);
+
             g_debug("%s: writing block %d", __func__, i);
-            if (mprotect(blk, RPMB_BLOCK_SIZE, PROT_WRITE) != 0) {
+            if (mprotect(addr, length, PROT_WRITE) != 0) {
                 r->last_result =  VIRTIO_RPMB_RES_WRITE_FAILURE;
                 break;
             }
             memcpy(blk, frame[i].data, RPMB_BLOCK_SIZE);
-            if (msync(blk, RPMB_BLOCK_SIZE, MS_SYNC) != 0) {
+            if (msync(addr, length, MS_SYNC) != 0) {
                 g_warning("%s: failed to sync update", __func__);
                 r->last_result = VIRTIO_RPMB_RES_WRITE_FAILURE;
                 break;
             }
-            if (mprotect(blk, RPMB_BLOCK_SIZE, PROT_READ) != 0) {
+            if (mprotect(addr, length, PROT_READ) != 0) {
                 g_warning("%s: failed to re-apply read protection", __func__);
                 r->last_result = VIRTIO_RPMB_RES_GENERAL_FAILURE;
                 break;
